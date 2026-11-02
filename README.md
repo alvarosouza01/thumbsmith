@@ -1,6 +1,6 @@
 # Thumbsmith
 
-![A thumbnail made in Thumbsmith, reading "AI won't replace this designer"](cover.png)
+![A thumbnail made in Thumbsmith, reading "AI won't replace this designer"](cover.webp)
 
 A free, open-source YouTube thumbnail maker that runs entirely in your browser. No account, no server, no build step.
 
