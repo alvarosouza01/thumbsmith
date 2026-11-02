@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thumbsmith · YouTube thumbnail maker</title>
+<meta name="description" content="Free, open-source YouTube thumbnail maker that runs entirely in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/example.js" defer></script>
+<script src="js/fonts.js" defer></script>
+<script src="js/image-tools.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="wordmark">Thumb<em>smith</em></span>
+    <span class="tagline">YouTube thumbnail maker</span>
+  </div>
+  <div class="actions">
+    <label class="btn-ghost">Open project<input type="file" id="openProject" accept=".json,application/json" hidden></label>
+    <button type="button" class="btn-ghost" id="loadExample">Load example</button>
+    <button type="button" class="btn-ghost" id="saveProject">Save project</button>
+    <button type="button" class="btn-ghost" id="resetAll">Start over</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="preview" aria-label="Preview">
+    <div class="preview-inner">
+      <div class="frame" id="frame"><div class="stage" id="stage"></div></div>
+      <div class="preview-bar">
+        <label class="check"><input type="checkbox" data-k="guides">Show safe area and timestamp</label>
+        <div class="export">
+          <span class="status" id="exportStatus"></span>
+          <button type="button" class="btn-primary" id="exportPng">Export PNG · 1280 × 720</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Controls">
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="text">Text</button>
+      <button type="button" role="tab" data-tab="photo">Photo</button>
+      <button type="button" role="tab" data-tab="cutout">Cutout</button>
+      <button type="button" role="tab" data-tab="icons">Icons</button>
+      <button type="button" role="tab" data-tab="theme">Theme</button>
+    </nav>
+
+    <div class="panel-body" data-panel="text">
+      <div class="group">
+        <div class="eyebrow">Kicker</div>
+        <div class="box-field" data-box="0">
+          <input type="text" class="field" aria-label="Kicker" data-k="kicker.text">
+          <label class="row"><span>Size</span><input type="range" min="14" max="64" step="1" data-k="kicker.fs"><output data-o="kicker.fs" data-unit=" px"></output></label>
+        </div>
+      </div>
+      <div class="group">
+        <div class="eyebrow">Title</div>
+        <div class="box-field" data-box="1">
+          <span class="label">Line 1 · highlight</span>
+          <input type="text" class="field" aria-label="Line 1" data-k="lines.0.text">
+          <label class="row"><span>Size</span><input type="range" min="60" max="320" step="2" data-k="lines.0.fs"><output data-o="lines.0.fs" data-unit=" px"></output></label>
+        </div>
+        <div class="box-field" data-box="2">
+          <span class="label">Line 2</span>
+          <input type="text" class="field" aria-label="Line 2" placeholder="Optional" data-k="lines.1.text">
+          <label class="row"><span>Size</span><input type="range" min="60" max="320" step="2" data-k="lines.1.fs"><output data-o="lines.1.fs" data-unit=" px"></output></label>
+        </div>
+        <div class="box-field" data-box="3">
+          <span class="label">Line 3</span>
+          <input type="text" class="field" aria-label="Line 3" placeholder="Optional" data-k="lines.2.text">
+          <label class="row"><span>Size</span><input type="range" min="60" max="320" step="2" data-k="lines.2.fs"><output data-o="lines.2.fs" data-unit=" px"></output></label>
+        </div>
+        <div class="hint-row">
+          <span class="hint">Drag each box in the preview and pull its side handles to change the width. Leave a line empty to hide it.</span>
+          <button type="button" class="btn-ghost" id="centerAll">Center all</button>
+        </div>
+      </div>
+      <div class="group">
+        <div class="eyebrow">Footer</div>
+        <input type="text" class="field" aria-label="Footer" data-k="footer.text">
+        <div class="hint">Up to 4 items, separated by commas. Leave empty to hide.</div>
+        <label class="row"><span>Size</span><input type="range" min="12" max="48" step="1" data-k="footer.fs"><output data-o="footer.fs" data-unit=" px"></output></label>
+        <label class="row"><span>Spacing</span><input type="range" min="0" max="240" step="2" data-k="footer.gap"><output data-o="footer.gap" data-unit=" px"></output></label>
+      </div>
+    </div>
+
+    <div class="panel-body" data-panel="photo" hidden>
+      <div class="group">
+        <div class="eyebrow">Photo</div>
+        <div class="btn-row">
+          <label class="btn">Upload photo<input type="file" id="photoFile" accept="image/*" hidden></label>
+          <button type="button" class="btn-ghost" id="photoRemove">Remove photo</button>
+        </div>
+        <label class="row"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-k="photo.x"><output data-o="photo.x" data-unit="%"></output></label>
+        <label class="row"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-k="photo.y"><output data-o="photo.y" data-unit="%"></output></label>
+        <label class="row"><span>Lower</span><input type="range" min="0" max="320" step="2" data-k="photo.drop"><output data-o="photo.drop" data-unit=" px"></output></label>
+        <label class="row"><span>Zoom</span><input type="range" min="1" max="4" step="0.05" data-k="photo.zoom"><output data-o="photo.zoom" data-fmt="zoom"></output></label>
+        <div class="hint">Lower pushes the photo down and fills the space above with the overlay color.</div>
+      </div>
+    </div>
+
+    <div class="panel-body" data-panel="cutout" hidden>
+      <div class="group">
+        <div class="eyebrow">Cutout over the title</div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="cutFromPhoto">Cut out from photo</button>
+          <label class="btn">Upload image<input type="file" id="cutoutFile" accept="image/*" hidden></label>
+          <button type="button" class="btn-ghost" id="cutoutRemove">Remove</button>
+        </div>
+        <div class="status" id="cutoutStatus"></div>
+        <div class="hint">The background is removed right here in your browser, so you appear in front of the title and icons. The first time, the cutout model downloads, which takes a few seconds. Images that already have a transparent background are used as they are.</div>
+      </div>
+    </div>
+
+    <div class="panel-body" data-panel="icons" hidden>
+      <div class="tiles" id="iconTiles"></div>
+      <div class="group" id="iconEditor">
+        <div class="hint-row">
+          <span class="label-lg" data-icon-name></span>
+          <div class="btn-row tight">
+            <label class="btn-ghost">Replace<input type="file" id="iconReplace" accept="image/*" hidden></label>
+            <button type="button" class="btn-ghost" id="iconRemove">Remove</button>
+          </div>
+        </div>
+        <label class="row"><span>X</span><input type="range" min="-100" max="1280" step="1" data-ik="x"><output data-io="x"></output></label>
+        <label class="row"><span>Y</span><input type="range" min="-100" max="720" step="1" data-ik="y"><output data-io="y"></output></label>
+        <label class="row"><span>Size</span><input type="range" min="60" max="260" step="2" data-ik="s"><output data-io="s" data-unit=" px"></output></label>
+        <label class="row"><span>Rotation</span><input type="range" min="-45" max="45" step="1" data-ik="rot"><output data-io="rot" data-unit="°"></output></label>
+        <div class="row row-2"><span>Order</span>
+          <div class="btn-split">
+            <button type="button" class="btn" id="iconForward">Bring forward</button>
+            <button type="button" class="btn" id="iconBackward">Send back</button>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" data-ik="above">Above the cutout</label>
+        <label class="check" id="cleanRow"><input type="checkbox" data-ik="cleanOn">Remove white border</label>
+      </div>
+      <div class="group" id="iconEmpty">
+        <span class="label-lg" data-icon-name></span>
+        <div class="btn-row">
+          <label class="btn">Upload icon<input type="file" id="iconUpload" accept="image/*" hidden></label>
+          <span class="hint">White borders are removed automatically.</span>
+        </div>
+      </div>
+      <div class="hint">Click a square to pick an icon slot. Drag icons in the preview or fine-tune them here.</div>
+    </div>
+
+    <div class="panel-body" data-panel="theme" hidden>
+      <div class="group">
+        <div class="eyebrow">Presets</div>
+        <div class="presets" id="presets"></div>
+      </div>
+      <div class="group">
+        <div class="eyebrow">Colors</div>
+        <label class="row"><span>Overlay</span><input type="color" data-k="theme.overlay"><output data-o="theme.overlay"></output></label>
+        <label class="row"><span>Highlight</span><input type="color" data-k="theme.accent"><output data-o="theme.accent"></output></label>
+        <label class="row"><span>Title</span><input type="color" data-k="theme.title"><output data-o="theme.title"></output></label>
+        <label class="row"><span>Footer</span><input type="color" data-k="theme.footer"><output data-o="theme.footer"></output></label>
+        <label class="row"><span>Overlay strength</span><input type="range" min="0" max="100" step="1" data-k="theme.strength"><output data-o="theme.strength" data-unit="%"></output></label>
+      </div>
+      <div class="group">
+        <div class="eyebrow">Fonts</div>
+        <label class="row row-2"><span>Title</span><select class="field" data-k="theme.titleFont" id="titleFont"></select></label>
+        <label class="row row-2"><span>Labels</span><select class="field" data-k="theme.labelFont" id="labelFont"></select></label>
+        <label class="check"><input type="checkbox" data-k="theme.italic">Italic highlight</label>
+        <div class="hint">Labels cover the kicker and the footer.</div>
+      </div>
+      <div class="group">
+        <div class="btn-row"><button type="button" class="btn" id="themeReset">Reset theme</button></div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="site-footer">
+  <span>Made by <a href="https://alvarosouza.com" target="_blank" rel="noopener">alvarosouza.com</a></span>
+  <span>Free and open source · MIT license</span>
+</footer>
+</body>
+</html>
